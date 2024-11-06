@@ -112,6 +112,34 @@ void MQTT_connect()
   Serial.println("MQTT Connected!");
 }
 
+typedef struct {
+    float Clow, Chigh;  // Concentration low and high
+    int Ilow, Ihigh;    // AQI low and high
+} Breakpoint;
+
+Breakpoint get_pm25_breakpoint(float concentration) {
+    if (concentration <= 12.0)
+        return (Breakpoint){0.0, 12.0, 0, 50};
+    else if (concentration <= 35.4)
+        return (Breakpoint){12.1, 35.4, 51, 100};
+    else if (concentration <= 55.4)
+        return (Breakpoint){35.5, 55.4, 101, 150};
+    else if (concentration <= 150.4)
+        return (Breakpoint){55.5, 150.4, 151, 200};
+    else if (concentration <= 250.4)
+        return (Breakpoint){150.5, 250.4, 201, 300};
+    else if (concentration <= 350.4)
+        return (Breakpoint){250.5, 350.4, 301, 400};
+    else if (concentration <= 500.4)
+        return (Breakpoint){350.5, 500.4, 401, 500};
+    else
+        return (Breakpoint){500.5, 9999.9, 501, 999}; // Beyond AQI scale
+}
+
+int calculate_aqi(float concentration, Breakpoint bp) {
+    return (int)(((bp.Ihigh - bp.Ilow) / (bp.Chigh - bp.Clow)) * (concentration - bp.Clow) + bp.Ilow);
+
+}
 
 void setup()
 {
@@ -200,8 +228,9 @@ void loop()
     Serial.println("Failed to read from SDS011 sensor!");
   }
 
-  // Determine Air Quality Index (AQI) based on PM2.5 and PM10
-  float AQI = max(p25, p10);
+  // Determine Air Quality Index (AQI) based on PM2.5
+  Breakpoint bp = get_pm25_breakpoint(p25);
+  int AQI = calculate_aqi(p25, bp);
 
   // Publish data to Adafruit IO
   if (!Temperature.publish(temperature))
