@@ -261,6 +261,6 @@ void loop()
   // Update display with new values
   displayValues(temperature, humidity, p25, p10, co2_ppm, AQI);
 
-  delay(5000); // Wait for 5 seconds before the next reading
+  delay(30000); // Wait for 30 seconds before the next reading
 }
 
