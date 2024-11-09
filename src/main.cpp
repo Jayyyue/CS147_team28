@@ -231,6 +231,7 @@ void loop()
   int AQI = calculate_aqi(p25, bp);
 
   // Publish data to Adafruit IO
+  
   if (!Temperature.publish(temperature))
   {
     Serial.println("Failed to publish temperature");
