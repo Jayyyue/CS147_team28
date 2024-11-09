@@ -167,8 +167,6 @@ void setup()
   }
   Serial.println("DHT20 sensor initialized.");
 
-
-  
   // Connect to WiFi
   Serial.println("Connecting to WiFi...");
   WiFi.begin(ssid, pass);
