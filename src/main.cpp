@@ -52,6 +52,9 @@ MQ135 gasSensor = MQ135(MQ135_PIN);
 // Display object
 TFT_eSPI tft = TFT_eSPI(); // Initialize TFT display
 
+//define the CO2 initial value
+float CO2_initial = 0;
+
 void displayValues(float temperature, float humidity, float p25, float p10, float co2_ppm, float AQI)
 {
   tft.fillScreen(TFT_BLACK);
@@ -64,31 +67,31 @@ void displayValues(float temperature, float humidity, float p25, float p10, floa
   // Display temperature
   tft.drawString("Temp: ", 0, 0);
   tft.drawFloat(temperature, 1, 80, 0);
-  tft.drawString("C", 120, 0);
+  tft.drawString("C", 140, 0);
 
   // Display humidity
   tft.drawString("Humidity: ", 0, 30);
   tft.drawFloat(humidity, 1, 100, 30);
-  tft.drawString("%", 140, 30);
+  tft.drawString("%", 160, 30);
 
   // Display PM2.5
   tft.drawString("PM2.5: ", 0, 60);
   tft.drawFloat(p25, 1, 80, 60);
-  tft.drawString("ug/m3", 120, 60);
+  tft.drawString("ug/m3", 140, 60);
 
   // Display PM10
   tft.drawString("PM10: ", 0, 90);
   tft.drawFloat(p10, 1, 80, 90);
-  tft.drawString("ug/m3", 120, 90);
+  tft.drawString("ug/m3", 140, 90);
 
   // Display CO2 concentration
   tft.drawString("CO2: ", 0, 120);
   tft.drawFloat(co2_ppm, 1, 80, 120);
-  tft.drawString("ppm", 120, 120);
+  tft.drawString("ppm", 140, 120);
 
   // Display Air Quality Index
   tft.drawString("AQI: ", 0, 150);
-  tft.drawFloat(AQI, 1, 80, 150);
+  tft.drawFloat(AQI, 1, 100, 150);
 
   // Optionally, add more styling or graphics as needed
 }
@@ -179,6 +182,13 @@ void setup()
 
   // Initialize MQTT connection
   MQTT_connect();
+
+  //wait 1 minute for the sensor to warm up
+  //delay(60000);
+
+  //initialize the CO2 value
+  CO2_initial = analogRead(MQ135_PIN);
+
 }
 
 void loop()
@@ -204,7 +214,12 @@ void loop()
   }
 
   // Read CO2 concentration from MQ135
-  float co2_ppm = gasSensor.getPPM();
+  float current_co2 = analogRead(MQ135_PIN);
+  if (current_co2 < CO2_initial)
+  {
+    CO2_initial = current_co2;
+  }
+  float co2_ppm = current_co2-CO2_initial;
   Serial.print("CO2 PPM: ");
   Serial.println(co2_ppm);
 
@@ -260,6 +275,6 @@ void loop()
   // Update display with new values
   displayValues(temperature, humidity, p25, p10, co2_ppm, AQI);
 
-  delay(30000); // Wait for 30 seconds before the next reading
+  delay(20000); // Wait for 30 seconds before the next reading
 }
 
