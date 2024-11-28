@@ -20,7 +20,7 @@
 // MQ135 (Analog signal)
 #define MQ135_PIN 33 // Analog input pin
 
-// DHT20 (I2C communication)
+// DHT11 (I2C communication)
 #define DHTPIN 21 // SDA pin (I2C)
 
 Adafruit_AHTX0 dht;
@@ -92,8 +92,6 @@ void displayValues(float temperature, float humidity, float p25, float p10, floa
   // Display Air Quality Index
   tft.drawString("AQI: ", 0, 150);
   tft.drawFloat(AQI, 1, 100, 150);
-
-  // Optionally, add more styling or graphics as needed
 }
 
 void MQTT_connect()
@@ -156,7 +154,7 @@ void setup()
   // Initialize TFT display
   tft.init();
   tft.setRotation(3); // Adjust rotation if needed (0-3)
-    tft.setTextSize(2);
+  tft.setTextSize(2);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
   Serial1.begin(9600, SERIAL_8N1, 26,27); // this line will begin Serial1 with given baud rate (9600 by default)
@@ -165,10 +163,10 @@ void setup()
   sds.wakeup();
 
   if (dht.begin()==0) {
-    Serial.println("Could not find AHT20 sensor. Check wiring.");
+    Serial.println("Could not find DHT11 sensor. Check wiring.");
     while (1) delay(10);
   }
-  Serial.println("DHT20 sensor initialized.");
+  Serial.println("DHT11 sensor initialized.");
 
   // Connect to WiFi
   Serial.println("Connecting to WiFi...");
@@ -183,8 +181,8 @@ void setup()
   // Initialize MQTT connection
   MQTT_connect();
 
-  //wait 1 minute for the sensor to warm up
-  //delay(60000);
+  //wait 2 minute for the sensor to warm up
+  delay(120000);
 
   //initialize the CO2 value
   CO2_initial = analogRead(MQ135_PIN);
@@ -275,6 +273,6 @@ void loop()
   // Update display with new values
   displayValues(temperature, humidity, p25, p10, co2_ppm, AQI);
 
-  delay(20000); // Wait for 30 seconds before the next reading
+  delay(12000); // Wait for 12 seconds before the next reading
 }
 
