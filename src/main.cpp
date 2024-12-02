@@ -39,6 +39,7 @@ Adafruit_MQTT_Client mqtt(&client, MQTT_SERV, MQTT_PORT, MQTT_NAME, MQTT_PASS);
 
 // MQTT topics
 Adafruit_MQTT_Publish AirQuality = Adafruit_MQTT_Publish(&mqtt, MQTT_NAME "/feeds/cs147-team28.aqi");
+Adafruit_MQTT_Publish AQI_Category = Adafruit_MQTT_Publish(&mqtt, MQTT_NAME "/feeds/cs147-team28.aqi-category");
 Adafruit_MQTT_Publish Temperature = Adafruit_MQTT_Publish(&mqtt, MQTT_NAME "/feeds/cs147-team28.temperature");
 Adafruit_MQTT_Publish Humidity = Adafruit_MQTT_Publish(&mqtt, MQTT_NAME "/feeds/cs147-team28.humidity");
 Adafruit_MQTT_Publish PM10 = Adafruit_MQTT_Publish(&mqtt, MQTT_NAME "/feeds/cs147-team28.pm10");
@@ -56,7 +57,7 @@ TFT_eSPI tft = TFT_eSPI(); // Initialize TFT display
 float CO2_initial = 0;
 
 
-void displayValues(float temperature, float humidity, float p25, float p10, float co2_ppm, int AQI)
+void displayValues(float temperature, float humidity, float p25, float p10, float co2_ppm, int AQI, const char *category)
 {
   // Display temperature
   tft.setCursor(50, 62);
@@ -80,7 +81,7 @@ void displayValues(float temperature, float humidity, float p25, float p10, floa
 
   // Display Air Quality Index
   tft.setCursor(50, 167);
-  tft.printf("Air Quality Index: %d", AQI);
+  tft.printf("AQI: %d, %s", AQI, category);
 }
 
 
@@ -107,26 +108,25 @@ void MQTT_connect()
 typedef struct {
     float Clow, Chigh;  // Concentration low and high
     int Ilow, Ihigh;    // AQI low and high
+    const char *category;
 } Breakpoint;
 
 
 Breakpoint get_pm25_breakpoint(float concentration) {
-    if (concentration <= 12.0)
-        return (Breakpoint){0.0, 12.0, 0, 50};
+    if (concentration <= 9.0)
+        return Breakpoint{0.0, 9.0, 0, 50, "Good"};
     else if (concentration <= 35.4)
-        return (Breakpoint){12.1, 35.4, 51, 100};
+        return Breakpoint{9.1, 35.4, 51, 100, "Moderate"};
     else if (concentration <= 55.4)
-        return (Breakpoint){35.5, 55.4, 101, 150};
-    else if (concentration <= 150.4)
-        return (Breakpoint){55.5, 150.4, 151, 200};
-    else if (concentration <= 250.4)
-        return (Breakpoint){150.5, 250.4, 201, 300};
-    else if (concentration <= 350.4)
-        return (Breakpoint){250.5, 350.4, 301, 400};
-    else if (concentration <= 500.4)
-        return (Breakpoint){350.5, 500.4, 401, 500};
+        return Breakpoint{35.5, 55.4, 101, 150, "Unhealthy For Sensitive"};
+    else if (concentration <= 125.4)
+        return Breakpoint{55.5, 125.4, 151, 200, "Unhealthy"};
+    else if (concentration <= 225.4)
+        return Breakpoint{125.5, 225.4, 201, 300, "Very Unhealthy"};
+    else if (concentration <= 325.4)
+        return Breakpoint{225.5, 325.4, 301, 500, "Hazardous"};
     else
-        return (Breakpoint){500.5, 9999.9, 501, 999}; // Beyond AQI scale
+        return Breakpoint{325.5, 999.9, 501, 999, "Hazardous"}; // Beyond AQI scale
 }
 
 
@@ -264,9 +264,13 @@ void loop()
   {
     Serial.println("Failed to publish Air Quality Index");
   }
+  if (!AQI_Category.publish(bp.category))
+  {
+    Serial.println("Failed to publish Air Quality Index");
+  }
 
   // Update display with new values
-  displayValues(temperature, humidity, p25, p10, co2_ppm, AQI);
+  displayValues(temperature, humidity, p25, p10, co2_ppm, AQI, bp.category);
 
-  delay(15000); // Wait for 15 seconds before the next reading
+  delay(16000); // Wait for 16 seconds before the next reading
 }
