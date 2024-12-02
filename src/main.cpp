@@ -53,8 +53,8 @@ MQ135 gasSensor = MQ135(MQ135_PIN);
 // Display object
 TFT_eSPI tft = TFT_eSPI(); // Initialize TFT display
 
-//define the CO2 initial value
-float CO2_initial = 0;
+//define the CO2 min value
+int min_co2_reading;
 
 
 void displayValues(float temperature, float humidity, float p25, float p10, float co2_ppm, int AQI, const char *category)
@@ -174,13 +174,10 @@ void setup()
 
   // Initialize MQTT connection
   MQTT_connect();
-
+  
+  min_co2_reading = 1024;
   //wait 2 minute for the sensor to warm up
   delay(120000);
-
-  //initialize the CO2 value
-  CO2_initial = analogRead(MQ135_PIN);
-
 }
 
 
@@ -207,13 +204,10 @@ void loop()
   }
 
   // Read CO2 concentration from MQ135
-  float current_co2 = analogRead(MQ135_PIN);
-  if (current_co2 < CO2_initial)
-  {
-    CO2_initial = current_co2;
-  }
-  float co2_ppm = current_co2-CO2_initial;
-  Serial.print("CO2 PPM: ");
+  int co2_reading = analogRead(MQ135_PIN);
+  min_co2_reading = std::min(min_co2_reading, co2_reading);
+  float co2_ppm = (co2_reading - min_co2_reading) / 1023.0 * 500;
+  Serial.print("CO2 PPM Increase: ");
   Serial.println(co2_ppm);
 
   // Read PM2.5 and PM10 from SDS011
