@@ -60,27 +60,27 @@ int min_co2_reading;
 void displayValues(float temperature, float humidity, float p25, float p10, float co2_ppm, int AQI, const char *category)
 {
   // Display temperature
-  tft.setCursor(50, 62);
-  tft.printf("Temp: %.3f C, %.3f F", temperature, temperature * 9 / 5 + 32);
+  tft.setCursor(1, 62);
+  tft.printf("Temp: %.1f C, %.1f F", temperature, temperature * 9 / 5 + 32);
 
   // Display humidity
-  tft.setCursor(50, 83);
+  tft.setCursor(1, 83);
   tft.printf("Humidity: %.3f%", humidity);
 
   // Display PM2.5
-  tft.setCursor(50, 104);
+  tft.setCursor(1, 104);
   tft.printf("PM2.5: %.3f ug/m3", p25);
 
   // Display PM10
-  tft.setCursor(50, 125);
+  tft.setCursor(1, 125);
   tft.printf("PM10: %.3f ug/m3", p10);
 
   // Display CO2 concentration
-  tft.setCursor(50, 146);
+  tft.setCursor(1, 146);
   tft.printf("CO2: %.3f ppm", co2_ppm);
 
   // Display Air Quality Index
-  tft.setCursor(50, 167);
+  tft.setCursor(1, 167);
   tft.printf("AQI: %d, %s", AQI, category);
 }
 
@@ -266,5 +266,5 @@ void loop()
   // Update display with new values
   displayValues(temperature, humidity, p25, p10, co2_ppm, AQI, bp.category);
 
-  delay(16000); // Wait for 16 seconds before the next reading
+  delay(18000); // Wait for 18 seconds before the next reading
 }
