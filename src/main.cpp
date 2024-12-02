@@ -26,8 +26,8 @@
 Adafruit_AHTX0 dht;
 
 // WiFi and MQTT settings
-const char *ssid = "yyue";     // WiFi name
-const char *pass = "123456789000";       // WiFi password
+const char *ssid = "";     // put WiFi name in this variable
+const char *pass = "";       // put WiFi password in this variable
 #define MQTT_SERV "io.adafruit.com"
 #define MQTT_PORT 1883
 #define MQTT_NAME "yyue" // Adafruit IO username
@@ -55,44 +55,34 @@ TFT_eSPI tft = TFT_eSPI(); // Initialize TFT display
 //define the CO2 initial value
 float CO2_initial = 0;
 
-void displayValues(float temperature, float humidity, float p25, float p10, float co2_ppm, float AQI)
+
+void displayValues(float temperature, float humidity, float p25, float p10, float co2_ppm, int AQI)
 {
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextDatum(TL_DATUM); // Top-left datum (0,0)
-
-  // Set text size (adjust as needed)
-  tft.setTextSize(2);
-
   // Display temperature
-  tft.drawString("Temp: ", 0, 0);
-  tft.drawFloat(temperature, 1, 80, 0);
-  tft.drawString("C", 140, 0);
+  tft.setCursor(50, 62);
+  tft.printf("Temp: %.3f C, %.3f F", temperature, temperature * 9 / 5 + 32);
 
   // Display humidity
-  tft.drawString("Humidity: ", 0, 30);
-  tft.drawFloat(humidity, 1, 100, 30);
-  tft.drawString("%", 160, 30);
+  tft.setCursor(50, 83);
+  tft.printf("Humidity: %.3f%", humidity);
 
   // Display PM2.5
-  tft.drawString("PM2.5: ", 0, 60);
-  tft.drawFloat(p25, 1, 80, 60);
-  tft.drawString("ug/m3", 140, 60);
+  tft.setCursor(50, 104);
+  tft.printf("PM2.5: %.3f ug/m3", p25);
 
   // Display PM10
-  tft.drawString("PM10: ", 0, 90);
-  tft.drawFloat(p10, 1, 80, 90);
-  tft.drawString("ug/m3", 140, 90);
+  tft.setCursor(50, 125);
+  tft.printf("PM10: %.3f ug/m3", p10);
 
   // Display CO2 concentration
-  tft.drawString("CO2: ", 0, 120);
-  tft.drawFloat(co2_ppm, 1, 80, 120);
-  tft.drawString("ppm", 140, 120);
+  tft.setCursor(50, 146);
+  tft.printf("CO2: %.3f ppm", co2_ppm);
 
   // Display Air Quality Index
-  tft.drawString("AQI: ", 0, 150);
-  tft.drawFloat(AQI, 1, 100, 150);
+  tft.setCursor(50, 167);
+  tft.printf("Air Quality Index: %d", AQI);
 }
+
 
 void MQTT_connect()
 {
@@ -113,10 +103,12 @@ void MQTT_connect()
   Serial.println("MQTT Connected!");
 }
 
+
 typedef struct {
     float Clow, Chigh;  // Concentration low and high
     int Ilow, Ihigh;    // AQI low and high
 } Breakpoint;
+
 
 Breakpoint get_pm25_breakpoint(float concentration) {
     if (concentration <= 12.0)
@@ -137,10 +129,12 @@ Breakpoint get_pm25_breakpoint(float concentration) {
         return (Breakpoint){500.5, 9999.9, 501, 999}; // Beyond AQI scale
 }
 
+
 int calculate_aqi(float concentration, Breakpoint bp) {
     return (int)(((bp.Ihigh - bp.Ilow) / (bp.Chigh - bp.Clow)) * (concentration - bp.Clow) + bp.Ilow);
 
 }
+
 
 void setup()
 {
@@ -153,11 +147,11 @@ void setup()
 
   // Initialize TFT display
   tft.init();
-  tft.setRotation(3); // Adjust rotation if needed (0-3)
-  tft.setTextSize(2);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.setTextSize(1);
 
-  Serial1.begin(9600, SERIAL_8N1, 26,27); // this line will begin Serial1 with given baud rate (9600 by default)
+  Serial1.begin(9600, SERIAL_8N1, 25,26); // this line will begin Serial1 with given baud rate (9600 by default)
   sds.begin(); // this line will begin Serial1 with given baud rate (9600 by default)
   sds.setActiveReportingMode(); // ensures sensor is in 'active' reporting mode
   sds.wakeup();
@@ -188,6 +182,7 @@ void setup()
   CO2_initial = analogRead(MQ135_PIN);
 
 }
+
 
 void loop()
 {
@@ -273,6 +268,5 @@ void loop()
   // Update display with new values
   displayValues(temperature, humidity, p25, p10, co2_ppm, AQI);
 
-  delay(12000); // Wait for 12 seconds before the next reading
+  delay(15000); // Wait for 15 seconds before the next reading
 }
-
